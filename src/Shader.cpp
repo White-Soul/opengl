@@ -1,4 +1,4 @@
-#include "Shader.h"
+#include "header/Shader.h"
 using namespace std;
 Shader::Shader(initializer_list<string> list) {
     for (auto a = list.begin(); a != list.end(); ++a) {
@@ -6,7 +6,7 @@ Shader::Shader(initializer_list<string> list) {
     }
 }
 
-void Shader::readShader(string path) {
+void Shader::readShader(const string& path) {
     if (path.find(".vert") == -1 && path.find(".frag") == -1) {
         cout << "Shader file is error, The file type cannot be judged";
         std::exit(-1);
@@ -26,7 +26,7 @@ void Shader::readShader(string path) {
     shaderList.push_back(make_pair(path, code));
 }
 
-void Shader::addShader(string path) { readShader(path); }
+void Shader::addShader(const string& path) { readShader(path); }
 
 void Shader::Compile() {
     vector<unsigned int> ids;

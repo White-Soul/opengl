@@ -1,4 +1,4 @@
-#include "Camera.h"
+#include "header/Camera.h"
 void Camera::updateCameraVectors() {
     glm::vec3 front;
     front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));

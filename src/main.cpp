@@ -1,10 +1,10 @@
-#include "tool.h"
-#include "utils.h"
-#include "Shader.h"
-#include "Model.h"
+#include "header/tool.h"
+#include "header/utils.h"
+#include "header/Shader.h"
+#include "header/Model.h"
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
 #pragma comment(lib, "glfw3.lib")
-#pragma comment(lib, "assimp-vc141-mtd.lib")
+#pragma comment(lib, "assimp-vc143-mtd.lib")
 #endif
 
 #ifdef DEBUG
@@ -73,7 +73,8 @@ int main() {
     // shader configuration
     // --------------------
     shader.use();
-    shader.setUniform("texture1", 0);
+    shader.setUniform("skybox", 0);
+    shader.setUniform("c", 1.0f);
 
     skyboxShader.use();
     skyboxShader.setUniform("skybox", 0);
@@ -98,6 +99,7 @@ int main() {
         shader.setUniform("model", model);
         shader.setUniform("view", view);
         shader.setUniform("projection", projection);
+        shader.setUniform("cameraPos", camera.position());
         // cubes
         glBindVertexArray(cubeVAO);
         glActiveTexture(GL_TEXTURE0);
@@ -145,6 +147,10 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    glDeleteVertexArrays(1, &cubeVAO);
+    glDeleteVertexArrays(1, &skyboxVAO);
+    glDeleteBuffers(1, &cubeVBO);
+    glDeleteBuffers(1, &skyboxVBO);
 
     glfwTerminate();
 

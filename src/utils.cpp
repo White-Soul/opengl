@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "header/utils.h"
 
 float lastX = width / 2.0f, lastY = height / 2.0f;
 float deltaTime = 0.0f;
