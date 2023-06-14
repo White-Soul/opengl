@@ -7,3 +7,5 @@
 #define DLL_API __declspec(dllimport)
 #endif
 #endif
+
+#define PI 3.1415926

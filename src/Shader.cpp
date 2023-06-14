@@ -7,9 +7,10 @@ Shader::Shader(initializer_list<string> list) {
 }
 
 void Shader::readShader(const string& path) {
-    if (path.find(".vert") == -1 && path.find(".frag") == -1) {
-        cout << "Shader file is error, The file type cannot be judged";
-        std::exit(-1);
+    auto type = getShaderType(path);
+    if (type == ShaderType::Unknown) {
+        throw shader_exception(
+            FileError, "Shader file is error, The file type cannot be judged");
     }
     string code;
     ifstream shaderFile;
@@ -21,7 +22,8 @@ void Shader::readShader(const string& path) {
         shaderFile.close();
         code = shaderStream.str();
     } catch (ifstream::failure e) {
-        cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ\n";
+        throw shader_exception(FileError,
+                               "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ");
     }
     shaderList.push_back(make_pair(path, code));
 }
@@ -34,8 +36,7 @@ void Shader::Compile() {
     char infoLog[512];
     for (auto a = shaderList.begin(); a != shaderList.end(); ++a) {
         unsigned int id;
-        auto gl = a->first.find(".vert") == -1 ? GL_FRAGMENT_SHADER
-                                               : GL_VERTEX_SHADER;
+        auto gl = getGLShaderType(getShaderType(a->first));
         id = glCreateShader(gl);
         const char* code = a->second.c_str();
         glShaderSource(id, 1, &code, NULL);
@@ -43,8 +44,7 @@ void Shader::Compile() {
         glGetShaderiv(id, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(id, 512, NULL, infoLog);
-            std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
-                      << infoLog << std::endl;
+            throw shader_exception(CompileError, infoLog);
         };
         ids.push_back(id);
     }
@@ -56,8 +56,7 @@ void Shader::Compile() {
     glGetProgramiv(this->ID, GL_LINK_STATUS, &success);
     if (!success) {
         glGetProgramInfoLog(this->ID, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
-                  << infoLog << std::endl;
+        throw shader_exception(LinkError, infoLog);
     }
     for (auto id : ids) {
         glDeleteShader(id);
@@ -82,7 +81,54 @@ void Shader::setUniform(const string& name, glm::mat4 val, int count) const {
 }
 
 void Shader::setUniform(const std::string& name, glm::vec3 val) const {
-    glUniform3f(glGetUniformLocation(this->ID, name.c_str()), val.x, val.y, val.z);
+    glUniform3f(glGetUniformLocation(this->ID, name.c_str()), val.x, val.y,
+                val.z);
 }
 
 void Shader::use() { glUseProgram(this->ID); }
+
+ShaderType Shader::getShaderType(const std::string& path) const {
+    std::string str = path.substr(path.size() - 5, 5);
+    ShaderType type{ShaderType::Unknown};
+    if (str == ShaderFileType::Vert)
+        type = ShaderType::Vert;
+    else if (str == ShaderFileType::Frag)
+        type = ShaderType::Frag;
+    else if (str == ShaderFileType::Comp)
+        type = ShaderType::Comp;
+    else if (str == ShaderFileType::Tesc)
+        type = ShaderType::Tesc;
+    else if (str == ShaderFileType::Tese)
+        type = ShaderType::Tese;
+    else if (str == ShaderFileType::Geom)
+        type = ShaderType::Geom;
+    return type;
+}
+
+int Shader::getGLShaderType(ShaderType type) const {
+    int gl_x;
+    switch (type) {
+        case ShaderType::Vert:
+            gl_x = GL_VERTEX_SHADER;
+            break;
+        case ShaderType::Frag:
+            gl_x = GL_FRAGMENT_SHADER;
+            break;
+        case ShaderType::Tesc:
+            gl_x = GL_TESS_CONTROL_SHADER;
+            break;
+        case ShaderType::Tese:
+            gl_x = GL_TESS_EVALUATION_SHADER;
+            break;
+        case ShaderType::Geom:
+            gl_x = GL_GEOMETRY_SHADER;
+            break;
+        case ShaderType::Comp:
+            gl_x = GL_COMPUTE_SHADER;
+            break;
+
+        default:
+            break;
+    }
+    return gl_x;
+}

@@ -8,10 +8,27 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "except.h"
+/*
+.vert - 顶点着色器
+.tesc - 曲面细分控制着色器
+.tese - 曲面细分评估着色器
+.geom - 几何着色器
+.frag - 片段着色器
+.comp - 计算着色器
+*/
+namespace ShaderFileType {
+    const char * Vert = ".vert";
+    const char * Frag = ".frag";
+    const char * Tesc = ".tesc";
+    const char * Tese = ".tese";
+    const char * Geom = ".geom";
+    const char * Comp = ".comp";
+};  // namespace Type
 /**
  * @brief shader文件类型
  */
-enum ShaderType { Vert, Frag };
+enum class ShaderType { Unknown, Vert, Frag, Tesc, Tese, Geom, Comp };
 
 /**
  * @class
@@ -24,11 +41,18 @@ class Shader {
     /// @brief 文件名--文件内容 键值对列表
     std::vector<std::pair<std::string, std::string>> shaderList;
     /**
-     * @brief 读取shader文件, 文件必须为.vert/.frag结尾
+     * @brief 读取shader文件, 文件类型必须是ShaderType中定义的类型
      * 
      * @param path 路径
      */
     void readShader(const std::string& path);
+    /**
+     * @brief 获取着色器类型对应的OpenGL值
+     * 
+     * @param type 着色器类型
+     * @return int 对应的Opengl值
+     */
+    int getGLShaderType(ShaderType type) const;
 
   public:
   /**
@@ -67,7 +91,7 @@ class Shader {
      * @brief Destroy the Shader object
      * 
      */
-    ~Shader() {
+    ~Shader() noexcept {
         if (ID != 0) glDeleteProgram(ID);
     }
     /**
@@ -129,6 +153,13 @@ class Shader {
      * @return unsigned int
      */
     unsigned int id() const { return ID; }
+    /**
+     * @brief 获取着色器文件对应的ShaderType
+     * 
+     * @param path 着色器文件的路径
+     * @return ShaderType 对应的ShaderType
+     */
+    ShaderType getShaderType(const std::string& path) const;
 };
 
 #endif
