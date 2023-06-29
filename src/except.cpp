@@ -20,7 +20,7 @@ std::string shader_exception::getCodeStr(shader_code code) const {
     return str;
 }
 
-const char* shader_exception::what() const {
+const char* shader_exception::what() const noexcept {
     auto str = getCodeStr(_code) + ": " + _message;
     return _message.c_str();
 }

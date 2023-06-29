@@ -1,5 +1,13 @@
 #include "header/Shader.h"
 using namespace std;
+
+const char* ShaderFileType::Vert = ".vert";
+const char* ShaderFileType::Frag = ".frag";
+const char* ShaderFileType::Tesc = ".tesc";
+const char* ShaderFileType::Tese = ".tese";
+const char* ShaderFileType::Geom = ".geom";
+const char* ShaderFileType::Comp = ".comp";
+
 Shader::Shader(initializer_list<string> list) {
     for (auto a = list.begin(); a != list.end(); ++a) {
         readShader(*a);
@@ -75,16 +83,6 @@ void Shader::setUniform(const string& name, float val) const {
     glUniform1f(glGetUniformLocation(this->ID, name.c_str()), val);
 }
 
-void Shader::setUniform(const string& name, glm::mat4 val, int count) const {
-    glUniformMatrix4fv(glGetUniformLocation(this->ID, name.c_str()), count,
-                       GL_FALSE, glm::value_ptr(val));
-}
-
-void Shader::setUniform(const std::string& name, glm::vec3 val) const {
-    glUniform3f(glGetUniformLocation(this->ID, name.c_str()), val.x, val.y,
-                val.z);
-}
-
 void Shader::use() { glUseProgram(this->ID); }
 
 ShaderType Shader::getShaderType(const std::string& path) const {
@@ -131,4 +129,16 @@ int Shader::getGLShaderType(ShaderType type) const {
             break;
     }
     return gl_x;
+}
+
+template <class Vector>
+void Shader::setUniformV(const std::string& name, Vector val) const {
+    glUniform3f(glGetUniformLocation(this->ID, name.c_str()), val.x, val.y,
+                val.z);
+}
+
+template <class Matrix, int N>
+void Shader::setUniformM(const std::string& name, Matrix val, int count) const {
+    glUniformMatrix4fv(glGetUniformLocation(this->ID, name.c_str()), count,
+                       GL_FALSE, getMatrixData(val));
 }

@@ -6,7 +6,7 @@
 #include <Eigen/Eigen>
 #include "config.h"
 /// @brief 相机移动枚举
-enum class DLL_API Camera_Movement {
+enum class Camera_Movement {
     FORWARD,
     BACKWARD,
     LEFT,
@@ -24,24 +24,32 @@ const float ZOOM = 45.0f;
  * @tparam Vector 向量类型
  * @tparam Matrix 矩阵类型
  */
-template <typename Vector = glm::vec3, typename Matrix = glm::mat4>
-class DLL_API Camera {
+template <typename Vector, typename Matrix>
+class Camera {
   private:
     /**
      * @brief 根据相机的（更新的）欧拉角计算前向量
      *
      */
-    void updateCameraVectors();
+    void updateCameraVectors() {
+        Vector front;
+        front.x = cos(Radian(Yaw)) * cos(Radian(Pitch));
+        front.y = sin(Radian(Pitch));
+        front.z = sin(Radian(Yaw)) * cos(Radian(Pitch));
+        Front = Normalized(front);
+        Right = Normalized(Cross(Front, WorldUp));
+        Up = Normalized(Cross(Right, Front));
+    }
     // 位置向量
-    glm::vec3 Position;
+    Vector Position;
     // 方向向量
-    glm::vec3 Front;
+    Vector Front;
     // 上向量
-    glm::vec3 Up;
+    Vector Up;
     // 右向量
-    glm::vec3 Right;
+    Vector Right;
     // 世界上向量
-    glm::vec3 WorldUp;
+    Vector WorldUp;
     // 偏航角
     float Yaw;
     // 俯仰角
@@ -64,7 +72,17 @@ class DLL_API Camera {
      */
     Camera(Vector position = Vector(0.0f, 0.0f, 0.0f),
            Vector up = Vector(0.0f, 1.0f, 0.0f), float yaw = YAW,
-           float pitch = PITCH);
+           float pitch = PITCH)
+        : Front(Vector(0.0f, 0.0f, -1.0f)),
+          MovementSpeed(SPEED),
+          MouseSensitivity(SENSITIVITY),
+          Zoom(ZOOM) {
+        Position = position;
+        WorldUp = up;
+        Yaw = yaw;
+        Pitch = pitch;
+        updateCameraVectors();
+    }
     /**
      * @brief 根据标量值来创建Camera
      *
@@ -78,19 +96,34 @@ class DLL_API Camera {
      * @param pitch 俯仰角 (角度制)
      */
     Camera(float posX, float posY, float posZ, float upX, float upY, float upZ,
-           float yaw, float pitch);
+           float yaw, float pitch)
+        : Front(Vector(0.0f, 0.0f, -1.0f)),
+          MovementSpeed(SPEED),
+          MouseSensitivity(SENSITIVITY),
+          Zoom(ZOOM) {
+        Position = Vector(posX, posY, posZ);
+        WorldUp = Vector(upX, upY, upZ);
+        Yaw = yaw;
+        Pitch = pitch;
+        updateCameraVectors();
+    }
     /**
      * @brief 返回使用欧拉角和 LookAt 矩阵计算的视图矩阵
      *
      * @return Matrix 视图矩阵
      */
-    Matrix GetViewMatrix();
+    Matrix GetViewMatrix() { return LookAt(Position, Position + Front, Up); }
     /**
      * @brief 处理从鼠标滚轮事件接收的输入。只需要在垂直轮轴上输入
      *
      * @param yoffset 垂直滚轮输入值
      */
-    void ProcessMouseScroll(float yoffset);
+    void ProcessMouseScroll(float yoffset) {
+        Zoom -= (float)yoffset;
+        if (Zoom < 1.0f) Zoom = 1.0f;
+        if (Zoom > 45.0f) Zoom = 45.0f;
+    }
+
     /**
      * @brief 处理从鼠标输入系统接收的输入。期望 x 和 y 方向上的偏移值
      *
@@ -100,7 +133,20 @@ class DLL_API Camera {
      * 默认为ture
      */
     void ProcessMouseMovement(float xoffset, float yoffset,
-                              GLboolean constrainPitch = true);
+                              GLboolean constrainPitch = true) {
+        xoffset *= MouseSensitivity;
+        yoffset *= MouseSensitivity;
+
+        Yaw += xoffset;
+        Pitch += yoffset;
+
+        if (constrainPitch) {
+            if (Pitch > 89.0f) Pitch = 89.0f;
+            if (Pitch < -89.0f) Pitch = -89.0f;
+        }
+
+        updateCameraVectors();
+    }
     /**
      * @brief 处理从任何类似键盘的输入系统接收的输入。接受相机定义的 enum
      * 形式的输入参数
@@ -108,7 +154,26 @@ class DLL_API Camera {
      * @param direction 定义的 Camera_Movement 枚举
      * @param deltaTime 当前帧与上一帧的时间差
      */
-    void ProcessKeyboard(Camera_Movement direction, float deltaTime);
+    void ProcessKeyboard(Camera_Movement direction, float deltaTime) {
+        float velocity = MovementSpeed * deltaTime;
+        switch (direction) {
+            case Camera_Movement::FORWARD:
+                Position += Front * velocity;
+                break;
+            case Camera_Movement::BACKWARD:
+                Position -= Front * velocity;
+                break;
+            case Camera_Movement::LEFT:
+                Position -= Right * velocity;
+                break;
+            case Camera_Movement::RIGHT:
+                Position += Right * velocity;
+                break;
+
+            default:
+                break;
+        }
+    }
     /**
      * @brief 返回相机位置向量
      *
@@ -169,98 +234,4 @@ class DLL_API Camera {
      * @return float 缩放值
      */
     inline float zoom() const { return Zoom; }
-    /**
-     * @brief 通过对应的值获取正交矩阵
-     *
-     * @param left 左范围
-     * @param right 右范围
-     * @param bottom 下范围
-     * @param top 上范围
-     * @param zNear 近范围
-     * @param zFar 远范围
-     * @return Matrix 对应的正交矩阵
-     */
-    static Matrix Ortho(float left, float right, float bottom, float top,
-                        float zNear, float zFar);
-    /**
-     * @brief 使用对应的值来获取投影矩阵
-     *
-     * @param fov 视角大小（弧度）
-     * @param aspect 宽高比
-     * @param zNear 近平面距离
-     * @param zFar 远平面距离
-     * @return Matrix 对应的投影矩阵
-     */
-    static Matrix Perspective(float fov, float aspect, float zNear, float zFar);
-    /**
-     * @brief 获取LookAt矩阵
-     *
-     * @param eye 相机位置
-     * @param center 目标位置
-     * @param up 上向量
-     * @return Matrix LookAt矩阵
-     */
-    static Matrix LookAt(const Vector& eye, const Vector& center,
-                         const Vector& up);
-    /**
-     * @brief 获取对应角度的弧度值
-     *
-     * @param angle 角度
-     * @return float 对应的弧度
-     */
-    inline static float Radian(float angle) { return angle * PI / 180; }
-    /**
-     * @brief 标准化向量
-     *
-     * @param v 需要标准化的向量
-     * @return Vector 标准向量
-     */
-    inline static Vector Normalized(Vector v) { return v.normalized(); }
-    /**
-     * @brief 标准化向量
-     *
-     * @param v 需要标准化的向量
-     * @return glm::vec3 标准向量
-     */
-    inline static glm::vec3 Normalized(glm::vec3 v) {
-        return glm::normalize(v);
-    }
-    /**
-     * @brief 标准化向量
-     *
-     * @param v 需要标准化的向量
-     * @return Eigen::Vector3f 标准向量
-     */
-    inline static Eigen::Vector3f Normalized(Eigen::Vector3f v) {
-        return v.normalized();
-    }
-    /**
-     * @brief 返回两个向量叉乘结果
-     *
-     * @param v1 第一个向量
-     * @param v2 第二个向量
-     * @return Vector 结果
-     */
-    inline static Vector Cross(Vector v1, Vector v2) { return v1.cross(v2); }
-    /**
-     * @brief 返回两个向量叉乘结果
-     *
-     * @param v1 第一个向量
-     * @param v2 第二个向量
-     * @return glm::vec3 结果
-     */
-    inline static glm::vec3 Cross(glm::vec3 v1, glm::vec3 v2) {
-        return glm::cross(v1, v2);
-    }
-    /**
-     * @brief 返回两个向量叉乘结果
-     *
-     * @param v1 第一个向量
-     * @param v2 第二个向量
-     * @return Eigen::Vector3f 结果
-     */
-    inline static Eigen::Vector3f Cross(Eigen::Vector3f v1,
-                                        Eigen::Vector3f v2) {
-        return v1.cross(v2);
-    }
 };
