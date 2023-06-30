@@ -1,5 +1,3 @@
-
-#include "header/tool.h"
 #include "header/utils.h"
 #include "header/Shader.h"
 #include "header/Model.h"
@@ -38,7 +36,12 @@ int main(int argc, char** argv) {
 
     Shader shader{"./resource/shader/game.vert", "./resource/shader/game.geom",
                   "./resource/shader/game.frag"};
-    shader.Compile();
+    try{
+        shader.Compile();
+    }catch(const shader_exception& e){
+        std::cerr << e.what() << std::endl;
+    }
+    
     shader.use();
 
     while (!glfwWindowShouldClose(window)) {

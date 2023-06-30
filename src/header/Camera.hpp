@@ -5,6 +5,7 @@
 #include <vector>
 #include <Eigen/Eigen>
 #include "config.h"
+#include "Template.h"
 /// @brief 相机移动枚举
 enum class Camera_Movement {
     FORWARD,
@@ -36,9 +37,9 @@ class Camera {
         front.x = cos(Radian(Yaw)) * cos(Radian(Pitch));
         front.y = sin(Radian(Pitch));
         front.z = sin(Radian(Yaw)) * cos(Radian(Pitch));
-        Front = Normalized(front);
-        Right = Normalized(Cross(Front, WorldUp));
-        Up = Normalized(Cross(Right, Front));
+        Front = Normalized<Vector, Matrix>(front);
+        Right = Normalized<Vector, Matrix>(Cross<Vector, Matrix>(Front, WorldUp));
+        Up = Normalized<Vector, Matrix>(Cross<Vector, Matrix>(Right, Front));
     }
     // 位置向量
     Vector Position;

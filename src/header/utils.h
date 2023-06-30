@@ -4,8 +4,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include "Camera.h"
+#include "Camera.hpp"
 #include "stb_image.h"
+#include "Template.h"
 #define PI 3.1415926
 
 /// @brief 屏幕宽度
