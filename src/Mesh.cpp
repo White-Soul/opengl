@@ -1,6 +1,6 @@
-#include "header/Mesh.h"
+﻿#include "header/Mesh.h"
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
+_MGL Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
            std::vector<Texture> textures) {
     this->vertices = vertices;
     this->indices = indices;
@@ -9,7 +9,7 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
     setupMesh();
 }
 
-void Mesh::setupMesh() {
+void _MGL Mesh::setupMesh() {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -51,7 +51,7 @@ void Mesh::setupMesh() {
     glBindVertexArray(0);
 }
 
-void Mesh::Draw(Shader& shader) {
+void _MGL Mesh::Draw(Shader& shader) {
     unsigned int diffuseNr = 1;
     unsigned int specularNr = 1;
     unsigned int normalNr = 1;

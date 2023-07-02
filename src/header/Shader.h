@@ -1,4 +1,4 @@
-#ifndef SHADER_H
+﻿#ifndef SHADER_H
 #define SHADER_H
 #include <glad/glad.h>
 #include <fstream>
@@ -9,7 +9,11 @@
 #include <string>
 #include <vector>
 #include "except.h"
-#include "tool.h"
+#include "type_traits.hpp"
+#include "defined.h"
+#include "utils.h"
+MGL_START
+HAS_METHOD(length);
 /*
 .vert - 顶点着色器
 .tesc - 曲面细分控制着色器
@@ -151,9 +155,48 @@ class Shader {
      * @tparam 模板参数
      * @param name Uniform对象名称
      * @param val 需要设置的值
+     * @param count 需要设置的数量
      */
-    template <class Vector>
-    void setUniformV(const std::string& name, Vector val) const;
+    template <typename V>
+    void setUniformV(const std::string& name, V val, unsigned int count = 1) {
+        int num = val.count();
+        switch (num) {
+            case 2:
+                glUniform2fv(glGetUniformLocation(this->ID, name.c_str()),
+                             count, val.data());
+                break;
+            case 3:
+                glUniform3fv(glGetUniformLocation(this->ID, name.c_str()),
+                             count, val.data());
+                break;
+            case 4:
+                glUniform4fv(glGetUniformLocation(this->ID, name.c_str()),
+                             count, val.data());
+                break;
+
+            default:
+                break;
+        }
+    }
+    template <>
+    void setUniformV<glm::vec2>(const std::string& name, glm::vec2 val,
+                                unsigned int count) {
+        float data[] = {val.x, val.y};
+        glUniform2fv(glGetUniformLocation(this->ID, name.c_str()), count, data);
+    }
+    template <>
+    void setUniformV<glm::vec3>(const std::string& name, glm::vec3 val,
+                                unsigned int count) {
+        float data[] = {val.x, val.y, val.z};
+        glUniform3fv(glGetUniformLocation(this->ID, name.c_str()), count, data);
+    }
+    template <>
+    void setUniformV<glm::vec4>(const std::string& name, glm::vec4 val,
+                                unsigned int count) {
+        float data[] = {val.x, val.y, val.z, val.w};
+        glUniform4fv(glGetUniformLocation(this->ID, name.c_str()), count,
+                     data);
+    }
     /**
      * @brief 设置着色器中的Uniform对象
      *
@@ -162,8 +205,45 @@ class Shader {
      * @param val 需要设置的值
      * @param count 需要设置的数量默认1个
      */
-    template <class Matrix, int N = 1>
-    void setUniformM(const std::string& name, Matrix val, int count = N) const;
-};
+    template <class M>
+    void setUniformM(const std::string& name, M val, int count = 1) {
+        int num = val.count();
+        switch (num) {
+            case 2:
+                glUniformMatrix2fv(glGetUniformLocation(this->ID, name.c_str()),
+                                   count, GL_FALSE, val.data());
+                break;
+            case 3:
+                glUniformMatrix3fv(glGetUniformLocation(this->ID, name.c_str()),
+                                   count, GL_FALSE, val.data());
+                break;
+            case 4:
+                glUniformMatrix4fv(glGetUniformLocation(this->ID, name.c_str()),
+                                   count, GL_FALSE, val.data());
+                break;
 
+            default:
+                break;
+        }
+    }
+    template <>
+    void setUniformM<glm::mat4>(const std::string& name, glm::mat4 val,
+                                int count) {
+        glUniformMatrix4fv(glGetUniformLocation(this->ID, name.c_str()), count,
+                           GL_FALSE, glm::value_ptr(val));
+    }
+    template <>
+    void setUniformM<glm::mat3>(const std::string& name, glm::mat3 val,
+                                int count) {
+        glUniformMatrix3fv(glGetUniformLocation(this->ID, name.c_str()), count,
+                           GL_FALSE, glm::value_ptr(val));
+    }
+    template <>
+    void setUniformM<glm::mat2>(const std::string& name, glm::mat2 val,
+                                int count) {
+        glUniformMatrix2fv(glGetUniformLocation(this->ID, name.c_str()), count,
+                           GL_FALSE, glm::value_ptr(val));
+    }
+};
+MGL_END
 #endif

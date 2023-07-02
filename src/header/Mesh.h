@@ -1,8 +1,10 @@
-#pragma once
+﻿#pragma once
 #include <glm/glm.hpp>
 #include <string>
 #include <vector>
 #include "Shader.h"
+#include "defined.h"
+MGL_START
 #define MAX_BONE_INFLUENCE 4
 /**
  * @brief 顶点
@@ -85,3 +87,4 @@ class Mesh {
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
          std::vector<Texture> textures);
 };
+MGL_END

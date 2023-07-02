@@ -1,12 +1,14 @@
-#pragma once
+﻿#pragma once
 #include <string>
 #include <vector>
 #include "Shader.h"
 #include "Mesh.h"
 #include "stb_image.h"
+#include "defined.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+MGL_START
 /**
  * @brief 获取纹理
  *
@@ -98,3 +100,5 @@ class Model {
                                               aiTextureType type,
                                               std::string typeName);
 };
+
+MGL_END

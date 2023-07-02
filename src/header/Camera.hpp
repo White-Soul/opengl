@@ -1,11 +1,12 @@
-#pragma once
+﻿#pragma once
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 #include <Eigen/Eigen>
-#include "config.h"
-#include "Template.h"
+#include "defined.h"
+#include "template.hpp"
+MGL_START
 /// @brief 相机移动枚举
 enum class Camera_Movement {
     FORWARD,
@@ -236,3 +237,5 @@ class Camera {
      */
     inline float zoom() const { return Zoom; }
 };
+
+MGL_END

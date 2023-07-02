@@ -1,12 +1,12 @@
 #include "header/utils.h"
-const int width = 600;
-const int height = 800;
+const int width = 800;
+const int height = 600;
 float lastX = width / 2.0f, lastY = height / 2.0f;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 bool firstMouse = true;
 
-Camera<glm::vec3, glm::mat4> camera(glm::vec3(0.0f, 0.0f, 3.0f));
+_MGL Camera<glm::vec3, glm::mat4> camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
     float xpos = static_cast<float>(xposIn);
@@ -65,8 +65,8 @@ unsigned int loadTexture(const char* path) {
 
 GLFWwindow* init() {
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     GLFWwindow* window =
         glfwCreateWindow(width, height, "LearnOpenGL", NULL, NULL);
@@ -77,7 +77,7 @@ GLFWwindow* init() {
     }
     glfwMakeContextCurrent(window);
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
@@ -96,13 +96,13 @@ void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(Camera_Movement::FORWARD, deltaTime);
+        camera.ProcessKeyboard(_MGL Camera_Movement::FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(Camera_Movement::BACKWARD, deltaTime);
+        camera.ProcessKeyboard(_MGL Camera_Movement::BACKWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(Camera_Movement::LEFT, deltaTime);
+        camera.ProcessKeyboard(_MGL Camera_Movement::LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(Camera_Movement::RIGHT, deltaTime);
+        camera.ProcessKeyboard(_MGL Camera_Movement::RIGHT, deltaTime);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -136,3 +136,4 @@ unsigned int loadCubemap(std::vector<std::string> faces) {
 
     return textureID;
 }
+

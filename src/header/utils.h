@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glad/glad.h>
@@ -6,7 +6,7 @@
 #include <iostream>
 #include "Camera.hpp"
 #include "stb_image.h"
-#include "Template.h"
+
 #define PI 3.1415926
 
 /// @brief 屏幕宽度
@@ -19,7 +19,7 @@ extern float deltaTime;
 extern float lastFrame;
 extern bool firstMouse;
 // 摄像机
-extern Camera<glm::vec3, glm::mat4> camera;
+extern _MGL Camera<glm::vec3, glm::mat4> camera;
 /**
  * @brief 鼠标回调函数
  *
@@ -99,3 +99,4 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
  * @return unsigned int 纹理名称
  */
 unsigned int loadCubemap(std::vector<std::string> faces);
+

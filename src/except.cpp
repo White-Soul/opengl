@@ -1,6 +1,6 @@
 #include "header/except.h"
 
-std::string shader_exception::getCodeStr(shader_code code) const {
+std::string _MGL shader_exception::getCodeStr(shader_code code) const {
     std::string str;
     switch (code) {
         case LinkError:
@@ -20,7 +20,9 @@ std::string shader_exception::getCodeStr(shader_code code) const {
     return str;
 }
 
-const char* shader_exception::what() const noexcept {
+const char* _MGL shader_exception::what() const noexcept {
     auto str = getCodeStr(_code) + ": " + _message;
     return _message.c_str();
 }
+
+const char* _MGL bad_any_cast::what() const noexcept { return _message.c_str(); }

@@ -1,20 +1,20 @@
 #include "header/Shader.h"
 using namespace std;
 
-const char* ShaderFileType::Vert = ".vert";
-const char* ShaderFileType::Frag = ".frag";
-const char* ShaderFileType::Tesc = ".tesc";
-const char* ShaderFileType::Tese = ".tese";
-const char* ShaderFileType::Geom = ".geom";
-const char* ShaderFileType::Comp = ".comp";
+const char* _MGL ShaderFileType::Vert = ".vert";
+const char* _MGL ShaderFileType::Frag = ".frag";
+const char* _MGL ShaderFileType::Tesc = ".tesc";
+const char* _MGL ShaderFileType::Tese = ".tese";
+const char* _MGL ShaderFileType::Geom = ".geom";
+const char* _MGL ShaderFileType::Comp = ".comp";
 
-Shader::Shader(initializer_list<string> list) {
+_MGL Shader::Shader(initializer_list<string> list) {
     for (auto a = list.begin(); a != list.end(); ++a) {
         readShader(*a);
     }
 }
 
-void Shader::readShader(const string& path) {
+void _MGL Shader::readShader(const string& path) {
     auto type = getShaderType(path);
     if (type == ShaderType::Unknown) {
         throw shader_exception(
@@ -36,9 +36,9 @@ void Shader::readShader(const string& path) {
     shaderList.push_back(make_pair(path, code));
 }
 
-void Shader::addShader(const string& path) { readShader(path); }
+void _MGL Shader::addShader(const string& path) { readShader(path); }
 
-void Shader::Compile() {
+void _MGL Shader::Compile() {
     vector<unsigned int> ids;
     int success;
     char infoLog[512];
@@ -71,21 +71,21 @@ void Shader::Compile() {
     }
 }
 
-void Shader::setUniform(const string& name, bool val) const {
+void _MGL Shader::setUniform(const string& name, bool val) const {
     glUniform1i(glGetUniformLocation(this->ID, name.c_str()), (int)val);
 }
 
-void Shader::setUniform(const string& name, int val) const {
+void _MGL Shader::setUniform(const string& name, int val) const {
     glUniform1i(glGetUniformLocation(this->ID, name.c_str()), val);
 }
 
-void Shader::setUniform(const string& name, float val) const {
+void _MGL Shader::setUniform(const string& name, float val) const {
     glUniform1f(glGetUniformLocation(this->ID, name.c_str()), val);
 }
 
-void Shader::use() { glUseProgram(this->ID); }
+void _MGL Shader::use() { glUseProgram(this->ID); }
 
-ShaderType Shader::getShaderType(const std::string& path) const {
+_MGL ShaderType _MGL Shader::getShaderType(const std::string& path) const {
     std::string str = path.substr(path.size() - 5, 5);
     ShaderType type{ShaderType::Unknown};
     if (str == ShaderFileType::Vert)
@@ -103,7 +103,7 @@ ShaderType Shader::getShaderType(const std::string& path) const {
     return type;
 }
 
-int Shader::getGLShaderType(ShaderType type) const {
+int _MGL Shader::getGLShaderType(ShaderType type) const {
     int gl_x;
     switch (type) {
         case ShaderType::Vert:
@@ -129,16 +129,4 @@ int Shader::getGLShaderType(ShaderType type) const {
             break;
     }
     return gl_x;
-}
-
-template <class Vector>
-void Shader::setUniformV(const std::string& name, Vector val) const {
-    glUniform3f(glGetUniformLocation(this->ID, name.c_str()), val.x, val.y,
-                val.z);
-}
-
-template <class Matrix, int N>
-void Shader::setUniformM(const std::string& name, Matrix val, int count) const {
-    glUniformMatrix4fv(glGetUniformLocation(this->ID, name.c_str()), count,
-                       GL_FALSE, getMatrixData(val));
 }
