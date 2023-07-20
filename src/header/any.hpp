@@ -1,5 +1,5 @@
-﻿#ifndef _ANY_
-#define _ANY_
+﻿#ifndef __ANY__
+#define __ANY__
 #include <typeinfo>
 #include "type_traits.hpp"
 #include "except.h"

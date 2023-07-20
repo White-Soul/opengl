@@ -1,7 +1,8 @@
-﻿#ifndef _TEMPLATE_TYPE_TRAITS_
-#define _TEMPLATE_TYPE_TRAITS_
-#include "defined.h"
+#ifndef __TEMPLATE_TYPE_TRAITS__
+#define __TEMPLATE_TYPE_TRAITS__
+#if defined(MGL_START)
 MGL_START
+#endif
 // 类型标识
 template <typename T>
 struct type_identity {
@@ -16,6 +17,14 @@ struct integral_constant {
                                      // 类型转换
     constexpr operator value_type() const noexcept { return value; }
     constexpr value_type operator()() const noexcept { return value; }
+};
+/**
+ * index sequence
+ */
+template <typename T, T... Index>
+struct integer_sequence {
+    using value_type = T;
+    static constexpr size_t size() noexcept { return sizeof...(Index); }
 };
 // 定义bool常量
 template <bool B>
@@ -33,6 +42,20 @@ template <typename T, typename F>
 struct conditional<false, T, F> : type_identity<F> {};
 template <bool B, typename T, typename F>
 using conditional_t = typename conditional<B, T, F>::type;
+/**
+ * @brief is const
+ * 判断类型是否是const的
+ */
+template <class T>
+struct is_const : public false_type {};
+template <class T>
+struct is_const<T const> : public true_type {};
+template <class T, unsigned long long N>
+struct is_const<T const[N]> : public true_type {};
+template <class T>
+struct is_const<T const[]> : public true_type{};
+template <class T>
+constexpr bool is_const_v = is_const<T>::value;
 
 /**
  * @brief is reference
@@ -41,10 +64,10 @@ using conditional_t = typename conditional<B, T, F>::type;
 template <typename T>
 struct is_reference : false_type {};
 template <typename T>
-struct is_reference<T &> : true_type {};
+struct is_reference<T&> : true_type {};
 template <typename T>
-struct is_reference<T &&> : true_type {};
-#if __cplusplus > 201703L
+struct is_reference<T&&> : true_type {};
+#if __cplusplus >= 201703L
 template <typename T>
 inline constexpr bool is_reference_v = is_reference<T>::value;
 #else
@@ -58,9 +81,9 @@ constexpr bool is_reference_v = is_reference<T>::value;
 template <typename T>
 struct remove_reference : type_identity<T> {};
 template <typename T>
-struct remove_reference<T &> : type_identity<T> {};
+struct remove_reference<T&> : type_identity<T> {};
 template <typename T>
-struct remove_reference<T &&> : type_identity<T> {};
+struct remove_reference<T&&> : type_identity<T> {};
 template <typename T>
 using remove_reference_t = typename remove_reference<T>::type;
 
@@ -72,7 +95,7 @@ template <typename T, typename U>
 struct is_same : false_type {};
 template <typename T>
 struct is_same<T, T> : true_type {};
-#if __cplusplus > 201703L
+#if __cplusplus >= 201703L
 template <typename T, typename U>
 inline constexpr bool is_same_v = is_same<T, U>::value;
 #else
@@ -97,7 +120,7 @@ template <typename T, typename U>
 struct is_one_of<T, U> : conditional_t<is_same_v<T, U>, true_type, false_type> {
 };
 #endif
-#if __cplusplus > 201703L
+#if __cplusplus >= 201703L
 template <typename T, typename... R>
 inline constexpr bool is_one_of_v = is_one_of<T, R...>::value;
 #else
@@ -113,7 +136,7 @@ template <typename Inst, template <typename...> typename Tmpl>
 struct is_instantiation_of : false_type {};
 template <template <typename...> typename Tmpl, typename... Args>
 struct is_instantiation_of<Tmpl<Args...>, Tmpl> : true_type {};
-#if __cplusplus > 201703L
+#if __cplusplus >= 201703L
 template <typename Inst, template <typename...> typename Tmpl>
 inline constexpr bool is_instantiation_of_v =
     is_instantiation_of<Inst, Tmpl>::value;
@@ -132,7 +155,7 @@ template <typename T>
 struct rank<T[]> : integral_constant<size_t, rank<T>::value + 1> {};
 template <typename T, size_t N>
 struct rank<T[N]> : integral_constant<size_t, rank<T>::value + 1> {};
-#if __cplusplus > 201703L
+#if __cplusplus >= 201703L
 template <typename T>
 inline constexpr size_t rank_v = rank<T>::value;
 #else
@@ -154,7 +177,7 @@ template <typename T, size_t I>
 struct extent<T[I], 0> : integral_constant<size_t, I> {};
 template <typename T, size_t I, unsigned N>
 struct extent<T[I], N> : extent<T, N - 1> {};
-#if __cplusplus > 201703L
+#if __cplusplus >= 201703L
 template <typename T>
 inline constexpr size_t extent_v = extent<T>::value;
 #else
@@ -212,14 +235,14 @@ using is_detected = is_detected_impl<void, Op, T...>;
  * @brief return lvalue type
  */
 template <typename T>
-type_identity<T &> return_lvalue_type(int);
+type_identity<T&> return_lvalue_type(int);
 template <typename T>
 type_identity<T> return_lvalue_type(...);
-template <typename T>
 /**
  * @brief return rvalue type
  */
-type_identity<T &&> return_rvalue_type(int);
+template <typename T>
+type_identity<T&&> return_rvalue_type(int);
 template <typename T>
 type_identity<T> return_rvalue_type(...);
 
@@ -247,14 +270,14 @@ using add_rvalue_reference_t = typename add_rvalue_reference<T>::type;
 template <typename T>
 struct add_reference_impl : add_lvalue_reference<T> {};
 template <typename T>
-struct add_reference_impl<T &&> : add_rvalue_reference<T> {};
+struct add_reference_impl<T&&> : add_rvalue_reference<T> {};
 template <class T>
 struct add_reference {
     typedef typename add_reference_impl<T>::type type;
 };
 template <class T>
-struct add_reference<T &> {
-    typedef T &type;
+struct add_reference<T&> {
+    typedef T& type;
 };
 template <>
 struct add_reference<void> {
@@ -281,27 +304,26 @@ using add_reference_t = typename add_reference<T>::type;
 template <typename T>
 add_rvalue_reference_t<T> declval() noexcept;
 
+template <typename T1, typename T2>
+using assign_t = decltype(declval<T1>() = declval<T2>());
+template <typename T1, typename T2, typename = void>
+struct is_assignable : false_type {};
+template <typename T1, typename T2>
+struct is_assignable<T1, T2, void_t<assign_t<T1, T2>>> : true_type {};
+
 /**
  * @brief is copy operator
  * @note 判断一个类型是否能拷贝赋值
  */
 template <typename T>
-using copy_assign_t = decltype(declval<T &>() = declval<T const &>());
-template <typename T, typename = void>
-struct is_copy_assignable : false_type {};
-template <typename T>
-struct is_copy_assignable<T, void_t<copy_assign_t<T>>> : true_type {};
+struct is_copy_assignable : is_assignable<T, T const&> {};
 
 /**
  *@brief is move operator
  *@note 判断一个类型是否能移动赋值
  */
 template <typename T>
-using move_assign_t = decltype(declval<T &>() = declval<T &&>());
-template <typename T, typename = void>
-struct is_move_assignable : false_type {};
-template <typename T>
-struct is_move_assignable<T, void_t<move_assign_t<T>>> : true_type {};
+struct is_move_assignable : is_assignable<T, T&&> {};
 
 /**
  *@brief is_integer
@@ -387,9 +409,25 @@ constexpr bool is_longlong_v = is_longlong<T>::value;
 template <typename T>
 struct is_pointer : false_type {};
 template <typename T>
-struct is_pointer<T *> : true_type {};
+struct is_pointer<T*> : true_type {};
+template <typename T>
+struct is_pointer<T* const> : true_type {};
+template <typename T>
+struct is_pointer<T* volatile> : true_type {};
+template <typename T>
+struct is_pointer<T* const volatile> : true_type {};
 template <typename T>
 constexpr bool is_pointer_v = is_pointer<T>::value;
+/**
+ * is member pointer
+ */
+template <class T>
+struct is_member_pointer_helper : false_type {};
+template <class T, class U>
+struct is_member_pointer_helper<T U::*> : true_type {};
+template <class T>
+struct is_member_pointer
+    : is_member_pointer_helper<typename remove_cv<T>::type> {};
 
 /**
  * @brief remove const
@@ -454,6 +492,9 @@ struct remove_cv<T volatile[]> {
 template <typename T>
 using remove_cv_t = typename remove_cv<T>::type;
 
+template <typename T>
+using remove_cvref_t = remove_cv_t<remove_reference_t<T>>;
+
 /**
  * @brief decay
  * @note 类型退化
@@ -461,9 +502,9 @@ using remove_cv_t = typename remove_cv<T>::type;
 template <typename T>
 struct decay : remove_cv<T> {};
 template <typename T>
-struct decay<T[]> : type_identity<T *> {};
+struct decay<T[]> : type_identity<T*> {};
 template <typename T, size_t N>
-struct decay<T[N]> : type_identity<T *> {};
+struct decay<T[N]> : type_identity<T*> {};
 template <typename R, typename... Args>
 struct decay<R(Args...)> : type_identity<R (*)(Args...)> {};
 template <typename R, typename... Args>
@@ -489,28 +530,58 @@ struct is_default_constructible : is_default_constructible_helper<T>::type {};
 template <typename T>
 constexpr bool is_default_constructible_v = is_default_constructible<T>::value;
 */
+
+/**
+ * 测试使用指定参数类型时是否可构造类型。
+ */
+template <typename T, typename... Args>
+using construct_t = decltype(T(declval<Args>()...));
+template <typename, typename T, typename... Args>
+struct is_constructible_impl : false_type {};
+template <typename T, typename... Args>
+struct is_constructible_impl<void_t<construct_t<T, Args...>>, T, Args...>
+    : true_type {};
+template <typename T, typename... Args>
+struct is_constructible : is_constructible_impl<void, T, Args...> {};
+template <typename T, typename... Args>
+constexpr bool is_constructible_v = is_constructible<T, Args...>::value;
 /**
  * @brief is default construct
  * @note 判断是否存在默认构造函数
  */
 template <typename T>
-using defalut_construct_t = decltype(T());
-template <typename T, typename = void>
-struct is_default_constructible : false_type {};
+struct is_default_constructible : is_constructible<T> {};
 template <typename T>
-struct is_default_constructible<T, void_t<defalut_construct_t<T>>> : true_type {
-};
-
+constexpr bool is_default_constructible_v = is_default_constructible<T>::value;
 /**
  * @brief is copy construct
  * @note 判断是否存在拷贝构造函数
  */
 template <typename T>
-using copy_construct_t = decltype(T(T()));
-template <typename T, typename = void>
-struct is_copy_constructible : false_type {};
+struct is_copy_constructible : is_constructible<T, const T&> {};
 template <typename T>
-struct is_copy_constructible<T, void_t<copy_construct_t<T>>> : true_type {};
+constexpr bool is_copy_constructible_v = is_copy_constructible<T>::value;
+/**
+ * 判断是否存在移动构造函数
+ */
+template <typename T>
+struct is_move_constructible : is_constructible<T, T&&> {};
+template <typename T>
+constexpr bool is_move_constructible_v = is_move_constructible<T>::value;
+/**
+ * 判断一个构造函数是否会抛出异常
+ */
+template <typename T, typename... Args>
+constexpr bool nothrow_construct_v = noexcept(T(declval<Args>()...));
+template <typename, typename T, typename... Args>
+struct is_nothrow_constructible : false_type {};
+template <typename T, typename... Args>
+struct is_nothrow_constructible<
+    enable_if<nothrow_construct_v<T, Args...>, void>, T, Args...> : true_type {
+};
+template <typename T, typename... Args>
+constexpr bool is_nothrow_constructible_v =
+    is_nothrow_constructible<T, Args...>::value;
 
 /**
  * @brief is void type
@@ -535,13 +606,26 @@ struct is_array<T[N]> : true_type {};
  * @brief is function pointer
  * @note 判断是否是函数指针
  */
-template <typename F>
-struct is_function : false_type {};
-template <typename F, typename... Args>
-struct is_function<F(Args...)> : true_type {};
-template <typename F, typename... Args>
-struct is_function<F(Args..., ...)> : true_type {};
-
+template <typename T>
+struct is_function : integral_constant<bool, !is_const<const T>::value &&
+                                                 is_reference<T>::value> {};
+/**
+ *
+ */
+template <class T>
+struct is_member_function_pointer_helper : false_type {};
+template <class T, class U>
+struct is_member_function_pointer_helper<T U::*> : is_function<T> {};
+template <class T>
+struct is_member_function_pointer
+    : is_member_function_pointer_helper<typename remove_cv<T>::type> {};
+/**
+ * is member object pointer
+ */
+template <class T>
+struct is_member_object_pointer
+    : integral_constant<bool, is_member_pointer<T>::value &&
+                                  !is_member_function_pointer<T>::value> {};
 /**
  * @brief is convertible type from -> type to
  * @note 判断一个类型是否能转为另一个类型
@@ -587,27 +671,271 @@ struct is_convertible<FROM, TO, void_t<convertible_t<FROM, TO>>, false>
         : true_type {};
 
 /**
- * @brief is const
- * 判断类型是否是const的
- */
-template <class T>
-struct is_const : public false_type {};
-template <class T>
-struct is_const<T const> : public true_type {};
-template <class T, unsigned long long N>
-struct is_const<T const[N]> : public true_type {};
-template <class T>
-struct is_const<T const[]> : public true_type{};
-
-/**
  * @brief 获取对象的地址
  *
  */
 template <class T>
-inline T *addressof(T &obj) {
-    return static_cast<T *>(static_cast<void *>(
-        const_cast<char *>(&reinterpret_cast<const volatile char &>(obj))));
+inline T* addressof(T& obj) {
+    return static_cast<T*>(static_cast<void*>(
+        const_cast<char*>(&reinterpret_cast<const volatile char&>(obj))));
 }
+/*=====================invoke result============================*/
+namespace detail {
+template <class T>
+struct is_reference_wrapper : false_type {};
+template <class U>
+struct is_reference_wrapper<reference_wrapper<U>> : true_type {};
 
+template <class T>
+struct invoke_impl {
+    template <class F, class... Args>
+    static auto call(F&& f, Args&&... args)
+        -> decltype(forward<F>(f)(forward<Args>(args)...));
+};
+
+template <class B, class MT>
+struct invoke_impl<MT B::*> {
+    template <class T, class Td = typename decay<T>::type,
+              class = typename enable_if<is_base_of<B, Td>::value>::type>
+    static auto get(T&& t) -> T&&;
+
+    template <class T, class Td = typename decay<T>::type,
+              class = typename enable_if<is_reference_wrapper<Td>::value>::type>
+    static auto get(T&& t) -> decltype(t.get());
+
+    template <
+        class T, class Td = typename decay<T>::type,
+        class = typename enable_if<!is_base_of<B, Td>::value>::type,
+        class = typename enable_if<!is_reference_wrapper<Td>::value>::type>
+    static auto get(T&& t) -> decltype(*forward<T>(t));
+
+    template <class T, class... Args, class MT1,
+              class = typename enable_if<is_function<MT1>::value>::type>
+    static auto call(MT1 B::*pmf, T&& t, Args&&... args)
+        -> decltype((invoke_impl::get(forward<T>(t)).*
+                     pmf)(forward<Args>(args)...));
+
+    template <class T>
+    static auto call(MT B::*pmd, T&& t)
+        -> decltype(invoke_impl::get(forward<T>(t)).*pmd);
+};
+
+template <class F, class... Args, class Fd = typename decay<F>::type>
+auto INVOKE(F&& f, Args&&... args)
+    -> decltype(invoke_impl<Fd>::call(forward<F>(f), forward<Args>(args)...));
+
+template <typename AlwaysVoid, typename, typename...>
+struct invoke_result {};
+template <typename F, typename... Args>
+struct invoke_result<decltype(void(INVOKE(declval<F>(), declval<Args>()...))),
+                     F, Args...> {
+    using type = decltype(INVOKE(declval<F>(), declval<Args>()...));
+};
+}  // namespace detail
+/**
+ * 获取某个函数的返回值类型
+ */
+template <typename T>
+struct result_of;
+template <typename Func, typename... Args>
+struct result_of<Func(Args...)> : detail::invoke_result<void, F, Args...> {};
+
+template <class F, class... ArgTypes>
+struct invoke_result : detail::invoke_result<void, F, ArgTypes...> {};
+/*=========================invoke===============================*/
+// 普通函数
+struct _InvokeFunc {
+    template <typename _Callable, typename... _Types>
+    static auto _Call(_Callable&& obj, _Types&&... args) {
+        return obj(forward<_Types>(args)...);
+    }
+};
+// 成员函数
+struct _InvokeMemFunc {
+    template <typename _Callable, typename _Obj, typename... _Types>
+    static auto _Call(_Callable&& fn, _Obj&& obj, _Types&&... argv)
+        -> decltype((obj->*fn)(std::forward<_Types>(argv)...)) {
+        return (obj->*fn)(std::forward<_Types>(argv)...);
+    }
+    template <typename _Callable, typename _Obj, typename... _Types>
+    static auto _Call(_Callable&& fn, _Obj&& obj, _Types&&... argv)
+        -> decltype((obj.*fn)(std::forward<_Types>(argv)...)) {
+        return (obj.*fn)(std::forward<_Types>(argv)...);
+    }
+};
+// 调用成员变量
+struct _InvokeMemObj {
+    template <typename _Callable, typename _Obj>
+    static auto _Call(_Callable&& fn, _Obj&& obj) -> decltype((obj->*fn)) {
+        return (obj->*fn);
+    }
+    template <typename _Callable, typename _Obj>
+    static auto _Call(_Callable&& fn, _Obj&& obj) -> decltype((obj.*fn)) {
+        return (obj.*fn);
+    }
+};
+///////////////
+template <typename _Callable, typename _FirstTy,
+          typename _Decayed = typename decay<_Callable>::type,
+          bool _Is_MemFun = is_member_function_pointer<_Decayed>::value,
+          bool _Is_MemObj = is_member_object_pointer<_Decayed>::value>
+struct _Invoke1;
+// 成员函数
+template <typename _Callable, typename _FirstTy, typename _Decayed>
+struct _Invoke1<_Callable, _FirstTy, _Decayed, true, false> : _InvokeMemFunc {};
+// 成员变量
+template <typename _Callable, typename _FirstTy, typename _Decayed>
+struct _Invoke1<_Callable, _FirstTy, _Decayed, false, true> : _InvokeMemObj {};
+// 普通函数
+template <typename _Callable, typename _FirstTy, typename _Decayed>
+struct _Invoke1<_Callable, _FirstTy, _Decayed, false, false> : _InvokeFunction {
+};
+// 本层先把无参数的直接筛选出来了
+template <typename _Callable, typename... _Types>
+struct _Invoke;
+// 无参数，必定是一个普通函数
+template <typename _Callable>
+struct _Invoke<_Callable> : _InvokeFunction {};
+// 有一个或多个参数，可能是普通函数，成员函数，数据成员
+template <typename _Callable, typename _FirstTy, typename... _Types>
+struct _Invoke<_Callable, _FirstTy, _Types...> : _Invoke1<_Callable, _FirstTy> {
+};
+/**
+ * invoke
+ */
+template <typename _Callable, typename... _Types>
+auto invoke(_Callable&& obj, _Types&&... argv) {
+    return _Invoke<_Callable, _Types...>::_Call(forward<_Callable>(obj),
+                                                forward<_Types>(argv)...);
+}
+/*================================================================*/
+/**
+ * move
+ */
+template <typename T>
+constexpr remove_reference_t<T>&& move(T&& arg) noexcept {
+    return static_cast<remove_reference_t<T>&&>(arg);
+}
+/**
+ * forward
+ */
+template <typename T>
+constexpr T&& forward(remove_reference_t<T>& arg) noexcept {
+    return static_cast<remove_reference_t<T>&&>(arg);
+}
+template <typename T>
+constexpr T&& forward(remove_reference_t<T>&& arg) noexcept {
+    return static_cast<remove_reference_t<T>&&>(arg);
+}
+/**
+ * add const
+ */
+template <typename T>
+struct add_const : type_identity<T const> {};
+template <typename T>
+using add_const_t = typename add_const<T>::type;
+/**
+ * add volatile
+ */
+template <typename T>
+struct add_volatile : type_identity<volatile T> {};
+template <typename T>
+using add_volatile_t = typename add_volatile<T>::type;
+/**
+ * add const volatile
+ */
+template <typename T>
+struct add_cv : type_identity<volatile const T> {};
+template <typename T>
+using add_cv_t = typename add_cv<T>::type;
+
+/**
+ * always_false
+ */
+template <typename>
+constexpr bool always_false = false;
+/**
+ * always_true
+ */
+template <typename>
+constexpr bool always_true = true;
+/**
+ * index sequence
+ */
+template <int... N>
+struct index_sequence {};
+/**
+ * make index sequence
+ */
+template <int N, int... M>
+struct make_index_sequence : public make_index_sequence<N - 1, N - 1, M...> {};
+template <int... M>
+struct make_index_sequence<0, M...> : public index_sequence<M...> {};
+/**
+ * index sequence for
+ */
+template <typename... Types>
+using index_sequence_for = make_index_sequence<sizeof...(Types)>;
+
+/*==================reference_wrapper=====================*/
+namespace detail {
+template <class T>
+constexpr T& fun(T& t) noexcept {
+    return t;
+}
+template <class T>
+void fun(T&&) = delete;
+}  // namespace detail
+
+template <class T>
+class reference_wrapper {
+  public:
+    typedef T type;
+    template <class U,
+              class = decltype(detail::fun<T>(declval<U>()),
+                               enable_if_t<!is_same_v<reference_wrapper,
+                                                      remove_cvref_t<U>>>())>
+    constexpr reference_wrapper(U&& u) noexcept(
+        noexcept(detail::fun<T>(forward<U>(u))))
+        : _ptr(addressof(detail::fun<T>(forward<U>(u)))) {}
+    reference_wrapper(const reference_wrapper&) noexcept = default;
+
+    reference_wrapper& operator=(const reference_wrapper&) noexcept = default;
+
+    constexpr operator T&() const noexcept { return *_ptr; }
+    constexpr T& get() const noexcept { return *_ptr; }
+
+    template <class... Args>
+    constexpr typename invoke_result<T&, Args...>::type operator()(
+        Args&&... args) const {
+        return invoke(get(), forward<Args>(args)...);
+    }
+
+  private:
+    T* _ptr;
+};
+template <class T>
+inline reference_wrapper<T> ref(T& t) noexcept {
+    return reference_wrapper<T>(t);
+}
+template <class T>
+inline reference_wrapper<T> ref(reference_wrapper<T> t) noexcept {
+    return ref(t.get());
+}
+/*============================================================*/
+
+template <class _Ty>
+struct _Unrefwrap_helper {};
+
+template <class _Ty>
+struct _Unrefwrap_helper<reference_wrapper<_Ty>> {
+    using type = _Ty&;
+};
+
+template <class _Ty>
+using unrefwrap_t = typename _Unrefwrap_helper<decay_t<_Ty>>::type;
+
+#if defined(MGL_END)
 MGL_END
+#endif
 #endif
