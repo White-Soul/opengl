@@ -1,12 +1,12 @@
-#include "header/Model.h"
+﻿#include "header/Model.h"
 
-void Model::Draw(Shader& shader) {
+void _MGL Model::Draw(Shader& shader) {
     for (unsigned int i = 0; i < meshes.size(); ++i) {
         meshes[i].Draw(shader);
     }
 }
 
-void Model::loadModel(const std::string& path) {
+void _MGL Model::loadModel(const std::string& path) {
     Assimp::Importer import;
     const aiScene* scene = import.ReadFile(
         path, aiProcess_Triangulate | aiProcess_GenSmoothNormals |
@@ -22,7 +22,7 @@ void Model::loadModel(const std::string& path) {
     processNode(scene->mRootNode, scene);
 }
 
-void Model::processNode(aiNode* node, const aiScene* scene) {
+void _MGL Model::processNode(aiNode* node, const aiScene* scene) {
     // 处理节点所有网格
     for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -34,7 +34,7 @@ void Model::processNode(aiNode* node, const aiScene* scene) {
     }
 }
 
-Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
+_MGL Mesh _MGL Model::processMesh(aiMesh* mesh, const aiScene* scene) {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
@@ -104,7 +104,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
     return Mesh(vertices, indices, textures);
 }
 
-std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat,
+std::vector<_MGL Texture> _MGL Model::loadMaterialTextures(aiMaterial* mat,
                                                  aiTextureType type,
                                                  std::string typeName) {
     std::vector<Texture> textures;
@@ -132,7 +132,7 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat,
     return textures;
 }
 
-unsigned int TextureFromFile(const char* path, const std::string& directory,
+unsigned int _MGL TextureFromFile(const char* path, const std::string& directory,
                              bool gamma) {
     std::string filename = std::string(path);
     filename = directory + '/' + filename;
